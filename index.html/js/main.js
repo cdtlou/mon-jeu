@@ -1,10 +1,24 @@
 // ============ INITIALISATION PRINCIPALE ============
 document.addEventListener('DOMContentLoaded', () => {
+    // VÉRIFICATION DE SAUVEGARDES
+    // Si les comptes principaux sont vides, essayer de récupérer depuis le backup
+    if (Object.keys(accountSystem.accounts).length === 0) {
+        const backup = localStorage.getItem('tetrisAccountsBackup');
+        if (backup) {
+            console.log('⚠️ Aucun compte trouvé. Récupération depuis le backup...');
+            accountSystem.recoverFromBackup();
+        }
+    }
+
+    // Initialiser la gestion des sauvegardes
+    uiManager.setupBackupEventListeners();
+
     // Vérifier si un utilisateur est déjà connecté (en cas de rechargement)
     if (accountSystem.currentUser) {
         // Restaurer la session
         uiManager.showPage('lobbyPage');
         uiManager.updateLobbyDisplay();
+        console.log(`✅ Session restaurée pour ${accountSystem.currentUser}`);
     } else {
         uiManager.showPage('loginPage');
     }
@@ -37,11 +51,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     console.log('🎮 District - Tetris Game initialized');
+    console.log(`📊 Comptes en mémoire: ${Object.keys(accountSystem.accounts).length}`);
 });
 
 // Sauvegarder les données avant de quitter
 window.addEventListener('beforeunload', (e) => {
-    // Les données sont déjà sauvegardées en temps réel
+    // Sauvegarder une dernière fois
+    if (accountSystem.currentUser) {
+        accountSystem.saveAccounts();
+        accountSystem.saveCurrentSession();
+    }
+    
     if (accountSystem.currentUser && window.tetrisGame && window.tetrisGame.isRunning) {
         e.preventDefault();
         e.returnValue = '';

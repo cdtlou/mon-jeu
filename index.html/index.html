@@ -9,6 +9,11 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+    <!-- Indicateur de synchronisation -->
+    <div id="syncStatus" class="sync-indicator">
+        <span id="syncStatusText">📡 Synchronisation...</span>
+    </div>
+
     <!-- Page de connexion -->
     <div id="loginPage" class="page active">
         <div class="login-container">
@@ -99,6 +104,37 @@
                     <button id="remapKeysBtn" class="btn btn-small">Remapper les touches</button>
                 </div>
             </div>
+            
+            <!-- SECTION SAUVEGARDES -->
+            <div class="settings-grid backup-section">
+                <h3>💾 Gestion des Sauvegardes</h3>
+                <div class="setting-box">
+                    <label>Télécharger une sauvegarde</label>
+                    <p>Exporte tous vos comptes en fichier JSON</p>
+                    <button id="exportBackupBtn" class="btn btn-primary">Télécharger</button>
+                </div>
+                <div class="setting-box">
+                    <label>Restaurer une sauvegarde</label>
+                    <p>Importe des comptes depuis un fichier JSON</p>
+                    <button id="importBackupBtn" class="btn btn-primary">Sélectionner un fichier</button>
+                    <input type="file" id="backupFileInput" accept=".json" style="display:none">
+                </div>
+                <div class="setting-box">
+                    <label>Sauvegarde Automatique</label>
+                    <p>Crée une copie locale pour restauration rapide</p>
+                    <button id="autoBackupBtn" class="btn btn-primary">Créer Backup Local</button>
+                </div>
+                <div class="setting-box">
+                    <label>Restaurer Backup Local</label>
+                    <p>Restaure la dernière sauvegarde automatique</p>
+                    <button id="restoreAutoBackupBtn" class="btn btn-primary">Restaurer</button>
+                </div>
+                <div class="setting-box">
+                    <label>Informations</label>
+                    <button id="backupInfoBtn" class="btn btn-primary">Voir les Infos</button>
+                </div>
+            </div>
+            
             <div class="settings-buttons">
                 <button id="closeSettingsBtn" class="btn btn-primary">Fermer</button>
                 <button id="logoutBtn" class="btn btn-primary btn-danger">Déconnexion</button>

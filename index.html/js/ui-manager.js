@@ -3,6 +3,41 @@ class UIManager {
     constructor() {
         this.currentPage = 'loginPage';
         this.setupEventListeners();
+        this.setupSyncIndicator();
+    }
+
+    setupSyncIndicator() {
+        // Écouter les changements de synchronisation
+        if (window.accountSystem) {
+            window.addEventListener('sync-status', (e) => {
+                this.updateSyncStatus(e.detail);
+            });
+        }
+    }
+
+    updateSyncStatus(status) {
+        const indicator = document.getElementById('syncStatus');
+        const text = document.getElementById('syncStatusText');
+        if (!indicator) return;
+
+        if (status === 'syncing') {
+            indicator.classList.remove('synced', 'error');
+            text.textContent = '📡 Synchronisation...';
+        } else if (status === 'synced') {
+            indicator.classList.remove('error');
+            indicator.classList.add('synced');
+            text.textContent = '✅ Synchronisé';
+            setTimeout(() => {
+                if (indicator.classList.contains('synced')) {
+                    indicator.classList.remove('synced');
+                    text.textContent = '📡 Synchronisation...';
+                }
+            }, 3000);
+        } else if (status === 'error') {
+            indicator.classList.remove('synced');
+            indicator.classList.add('error');
+            text.textContent = '⚠️ Hors ligne';
+        }
     }
 
     setupEventListeners() {
@@ -101,7 +136,15 @@ class UIManager {
             this.showError(''); // Effacer les erreurs
             document.getElementById('pseudoInput').value = '';
             document.getElementById('codeInput').value = '';
-            this.showError('Compte créé! Vous pouvez maintenant vous connecter.', 'success');
+            
+            // Vérifier 2x que le compte a bien été créé
+            setTimeout(() => {
+                if (accountSystem.accounts[pseudo]) {
+                    this.showError('✅ Compte créé et sauvegardé! Vous pouvez maintenant vous connecter.', 'success');
+                } else {
+                    this.showError('⚠️ ERREUR: Le compte n\'a pas pu être sauvegardé!', 'error');
+                }
+            }, 500);
         } else {
             this.showError(result.message);
         }
@@ -121,7 +164,11 @@ class UIManager {
             this.showError('');
             document.getElementById('pseudoInput').value = '';
             document.getElementById('codeInput').value = '';
-            this.showPage('lobbyPage');
+            
+            // Vérifier que l'utilisateur est bien connecté
+            setTimeout(() => {
+                this.showPage('lobbyPage');
+            }, 300);
         } else {
             this.showError(result.message);
         }
@@ -563,6 +610,81 @@ class UIManager {
                 }
             }
         });
+    }
+
+    // ============ GESTION DES SAUVEGARDES ============
+    
+    setupBackupEventListeners() {
+        const exportBtn = document.getElementById('exportBackupBtn');
+        const importBtn = document.getElementById('importBackupBtn');
+        const autoBackupBtn = document.getElementById('autoBackupBtn');
+        const restoreAutoBackupBtn = document.getElementById('restoreAutoBackupBtn');
+        const backupInfoBtn = document.getElementById('backupInfoBtn');
+        const fileInput = document.getElementById('backupFileInput');
+        
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                const result = accountSystem.exportAccounts();
+                alert(result.message);
+            });
+        }
+        
+        if (importBtn) {
+            importBtn.addEventListener('click', () => {
+                fileInput?.click();
+            });
+        }
+        
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const result = accountSystem.importAccounts(event.target.result);
+                        alert(result.message);
+                        if (result.success) {
+                            location.reload();
+                        }
+                    } catch (error) {
+                        alert('Erreur lors de la lecture du fichier');
+                    }
+                };
+                reader.readAsText(file);
+                e.target.value = ''; // Reset input
+            });
+        }
+        
+        if (autoBackupBtn) {
+            autoBackupBtn.addEventListener('click', () => {
+                const result = accountSystem.createAutoBackup();
+                alert(result.success ? 'Sauvegarde automatique créée!' : result.message);
+            });
+        }
+        
+        if (restoreAutoBackupBtn) {
+            restoreAutoBackupBtn.addEventListener('click', () => {
+                const result = accountSystem.restoreFromAutoBackup();
+                alert(result.message);
+                if (result.success) {
+                    location.reload();
+                }
+            });
+        }
+        
+        if (backupInfoBtn) {
+            backupInfoBtn.addEventListener('click', () => {
+                const info = accountSystem.getBackupInfo();
+                const message = `📊 Informations de Sauvegarde:\n\n` +
+                    `Total de comptes: ${info.totalAccounts}\n` +
+                    `Comptes: ${info.accounts.join(', ') || 'Aucun'}\n` +
+                    `Dernier save: ${info.lastSave}\n` +
+                    `Taille stockage: ${info.storageUsage}`;
+                alert(message);
+            });
+        }
     }
 }
 
